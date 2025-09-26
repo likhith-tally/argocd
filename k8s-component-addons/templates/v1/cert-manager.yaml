@@ -64,3 +64,5 @@ spec:
             name: route53-creds
             key: secret-access-key
           region: {{ .Values.route53.region }}
+
+{{- end }}
