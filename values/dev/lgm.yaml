@@ -1,0 +1,8 @@
+stage: dev
+environment: ""
+
+repoUrl:
+  templates: https://github.com/likhith-tally/argocd.git
+
+repoBranch:
+  templates: main

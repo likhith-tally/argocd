@@ -17,8 +17,8 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   generators:
   - git:
-      repoURL: https://tallygit.tallysolutions.com/scm/tpca/code.tpca.argocd.git #{{ .Values.repoUrl.templates }}
-      revision: obs #{{ .Values.repoBranch.templates }}
+      repoURL: {{ .Values.repoUrl.templates }}
+      revision: {{ .Values.repoBranch.templates }}
       files:
       - path: lgm/all-charts.yaml
   template:
