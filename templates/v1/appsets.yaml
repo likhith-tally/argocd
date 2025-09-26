@@ -1,6 +1,6 @@
 # Note: Need to create argocd-repo-creds-secret in the argocd namespace before deploying.
 
-# K8s components
+# Helm charts
 ---
 
 apiVersion: argoproj.io/v1alpha1
@@ -55,4 +55,39 @@ spec:
         automated:
           prune: true
           selfHeal: true
+
+
+# k8s yamls
+---
+
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  {{- if eq .Values.environment "" }}
+  name: k8s-component-addons-appset
+  {{- else }}
+  name: "{{ .Values.environment }}-k8s-component-addons-appset"
+  {{- end }}
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: {{ .Values.repoUrl.templates }}
+    targetRevision: {{ .Values.repoBranch.templates }}
+    path: k8s-component-addons/
+    helm:
+      valueFiles:
+      - values/values.yaml
+      - ../values/values.yaml
+      - ../values/{{ .Values.stage }}/lgm.yaml
+      parameters:
+      - name: "environment"
+        value: "{{ .Values.environment }}"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
 
