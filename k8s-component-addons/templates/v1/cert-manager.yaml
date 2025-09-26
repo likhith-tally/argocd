@@ -67,49 +67,17 @@ spec:
 
 ---
 
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: {{ .Values.tls.basename }}-cert
-  namespace: {{ .Values.sharedSecretStore.sharedNamespace }}
-spec:
-  secretName: {{ .Values.tls.basename }}-secret
-  dnsNames:
-  - "*.{{ .Values.accountIdentity }}.{{ .Values.baseDomain }}"
-  issuerRef:
-    name: {{ .Values.certManager.certIssuerName }}
-    kind: ClusterIssuer
+# apiVersion: cert-manager.io/v1
+# kind: Certificate
+# metadata:
+#   name: grafana-{{ .Values.tls.basename }}-cert
+#   namespace: {{ .Values.sharedSecretStore.sharedNamespace }}
+# spec:
+#   secretName: {{ .Values.tls.basename }}-secret
+#   dnsNames:
+#   - "*.{{ .Values.accountIdentity }}.{{ .Values.baseDomain }}"
+#   issuerRef:
+#     name: {{ .Values.certManager.certIssuerName }}
+#     kind: ClusterIssuer
 
----
-
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: unauth-{{ .Values.tls.basename }}-cert
-  namespace: {{ .Values.sharedSecretStore.sharedNamespace }}
-spec:
-  secretName: unauth-{{ .Values.tls.basename }}-secret
-  dnsNames:
-  - "biz.{{ .Values.baseDomain }}"
-  issuerRef:
-    name: {{ .Values.certManager.certIssuerName }}
-    kind: ClusterIssuer
-
-{{- else }}
-
----
-
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: {{ .Values.environment }}-unauth-{{ .Values.tls.basename }}-cert
-  namespace: {{ .Values.sharedSecretStore.sharedNamespace }}
-spec:
-  secretName: {{ .Values.environment }}-unauth-{{ .Values.tls.basename }}-secret
-  dnsNames:
-  - "{{ .Values.environment }}-biz.{{ .Values.baseDomain }}"
-  issuerRef:
-    name: {{ .Values.certManager.certIssuerName }}
-    kind: ClusterIssuer
-
-{{- end }}
+# ---
