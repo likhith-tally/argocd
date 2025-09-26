@@ -80,6 +80,7 @@ spec:
       - values/values.yaml
       - ../values/values.yaml
       - ../values/{{ .Values.stage }}/lgm.yaml
+      - ../values/{{ .Values.stage }}/common.yaml
       parameters:
       - name: "environment"
         value: "{{ .Values.environment }}"

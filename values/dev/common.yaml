@@ -1,0 +1,60 @@
+stage: dev  # [NOTE] Update this manually in 4 other places for fluentbit. Need to do it once per environment, i.e., dev, staging, prod.
+environment: ""
+
+repoUrl: 
+  templates: https://github.com/likhith-tally/argocd.git
+  customers: https://github.com/likhith-tally/argocd.git
+
+repoBranch: 
+  templates: main
+
+repoCredsVault: "ocid1.vault.oc1.ap-mumbai-1.fbuhufypaafpc.abrg6ljrrwfpf7346uuoav6zczip6dscqbi52hghuvuup3wifc7uqk4nwxba"
+
+baseDomain: in.tpoci.tgodev.com
+
+sharedSecretStore:
+  name: shared-secret-store
+  sharedNamespace: default
+
+# [TODO] Get this from the vault
+route53:
+  accessKeyID: QUtJQVpUT0xFVkM1N0NPUzY3VjU=
+  secretAccessKey: T3ZyQnd0Tkt4cjU3eG5UZnBtTWpVVllSM3dVQ2dFL3hJZkhnbUh3RA==
+  region: us-east-1
+
+tls:
+  basename: tls
+
+compartments:
+  obs:
+    root: "ocid1.tenancy.oc1..aaaaaaaaosp7wej2fqrvacexolafmu3kw3euc2k5lwuirycvwzhspoleqrsq"
+    state: "ocid1.tenancy.oc1..aaaaaaaavbhvvrcr4hc4efiopcldy3y2fpoi2zk52gov2afu37dbampqkqga"
+  parent:
+    root: "ocid1.tenancy.oc1..aaaaaaaavbhvvrcr4hc4efiopcldy3y2fpoi2zk52gov2afu37dbampqkqga"
+    state: "ocid1.tenancy.oc1..aaaaaaaavbhvvrcr4hc4efiopcldy3y2fpoi2zk52gov2afu37dbampqkqga"
+    notifications: "ocid1.tenancy.oc1..aaaaaaaavbhvvrcr4hc4efiopcldy3y2fpoi2zk52gov2afu37dbampqkqga"
+    audit: "ocid1.tenancy.oc1..aaaaaaaavbhvvrcr4hc4efiopcldy3y2fpoi2zk52gov2afu37dbampqkqga"
+    bucket: "ocid1.tenancy.oc1..aaaaaaaavbhvvrcr4hc4efiopcldy3y2fpoi2zk52gov2afu37dbampqkqga"
+    gitops: "ocid1.tenancy.oc1..aaaaaaaavbhvvrcr4hc4efiopcldy3y2fpoi2zk52gov2afu37dbampqkqga"
+    registry: "ocid1.tenancy.oc1..aaaaaaaavbhvvrcr4hc4efiopcldy3y2fpoi2zk52gov2afu37dbampqkqga"
+    security: "ocid1.tenancy.oc1..aaaaaaaavbhvvrcr4hc4efiopcldy3y2fpoi2zk52gov2afu37dbampqkqga"
+  c001b:
+    root: "ocid1.tenancy.oc1..aaaaaaaa2f262gikdz7coupfl3udi6um3gyvxu2icgm6jahr3z4jqb5dpzrq"
+    compute: "ocid1.tenancy.oc1..aaaaaaaa2f262gikdz7coupfl3udi6um3gyvxu2icgm6jahr3z4jqb5dpzrq"
+    volume: "ocid1.tenancy.oc1..aaaaaaaa2f262gikdz7coupfl3udi6um3gyvxu2icgm6jahr3z4jqb5dpzrq"
+    bucket: "ocid1.tenancy.oc1..aaaaaaaa2f262gikdz7coupfl3udi6um3gyvxu2icgm6jahr3z4jqb5dpzrq"
+  
+ociNamespaces:
+  parent: "bmh8d80uyq7n"
+  c001: "bmpoow9kzq9g"
+
+containerRegistry: ocir.ap-mumbai-1.oci.oraclecloud.com
+
+images:
+  bizLogic: biz-logic:master-dev3.0
+  vdiAuth: tally-vdi-auth:tally_vdi_auth_v2.6
+
+observability:
+  lokiEndpoint: "http://10.251.0.48:80" 
+  mimirEndpoint: "http://10.251.0.44:80"
+
