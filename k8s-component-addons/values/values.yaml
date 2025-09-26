@@ -4,7 +4,7 @@ certManager:
   certIssuerEmail: cloudops.tpca@tallysolutions.com
   certIssuerServer: https://acme-v02.api.letsencrypt.org/directory
   hpa:
-    enabled: flase
+    enabled: false
     minReplicas: 5
     maxReplicas: 10
     cpuUtilization: 70
@@ -33,7 +33,7 @@ externalSecrets:
   basename: external-secrets
 
   hpa:
-    enabled: flase
+    enabled: false
     minReplicas: 5
     maxReplicas: 10
     cpuUtilization: 70
