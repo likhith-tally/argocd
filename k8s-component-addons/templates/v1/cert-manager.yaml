@@ -65,19 +65,4 @@ spec:
             key: secret-access-key
           region: {{ .Values.route53.region }}
 
-# ---
 
-# apiVersion: cert-manager.io/v1
-# kind: Certificate
-# metadata:
-#   name: grafana-{{ .Values.tls.basename }}-cert
-#   namespace: {{ .Values.sharedSecretStore.sharedNamespace }}
-# spec:
-#   secretName: {{ .Values.tls.basename }}-secret
-#   dnsNames:
-#   - "*.{{ .Values.accountIdentity }}.{{ .Values.baseDomain }}"
-#   issuerRef:
-#     name: {{ .Values.certManager.certIssuerName }}
-#     kind: ClusterIssuer
-
-# ---
