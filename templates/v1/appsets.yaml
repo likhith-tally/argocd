@@ -1,0 +1,58 @@
+# Note: Need to create argocd-repo-creds-secret in the argocd namespace before deploying.
+
+# K8s components
+---
+
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  {{- if eq .Values.environment "" }}
+  name: lgm-components-appset
+  {{- else }}
+  name: "{{ .Values.environment }}-lgm-components-appset"
+  {{- end }}
+  namespace: argocd
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+  - git:
+      repoURL: https://tallygit.tallysolutions.com/scm/tpca/code.tpca.argocd.git #{{ .Values.repoUrl.templates }}
+      revision: obs #{{ .Values.repoBranch.templates }}
+      files:
+      - path: lgm/all-charts.yaml
+  template:
+    metadata:
+      {{- if eq .Values.environment "" }}
+      name: "{{"{{"}} .name {{"}}"}}"
+      {{- else }}
+      name: "{{ .Values.environment }}-{{"{{"}} .name {{"}}"}}"
+      {{- end }}
+      namespace: argocd
+    spec:
+      project: default
+      sources:
+      - repoURL: "{{"{{"}} .repoUrl {{"}}"}}"
+        chart: "{{"{{"}} .chartName {{"}}"}}"
+        targetRevision: "{{"{{"}} .targetRevision {{"}}"}}"
+        helm:
+          valueFiles:
+          - "$values/lgm/values/{{"{{"}} .valuesFile {{"}}"}}"
+      - repoURL: {{ .Values.repoUrl.templates }}
+        targetRevision: {{ .Values.repoBranch.templates }}
+        ref: values
+      destination:
+        server: https://kubernetes.default.svc
+        {{- if eq .Values.environment "" }}
+        namespace: "{{"{{"}} .namespace {{"}}"}}"
+        {{- else }}
+        namespace: "{{ .Values.environment }}-{{"{{"}} .namespace {{"}}"}}"
+        {{- end }}
+      syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
+        - ServerSideApply=true
+        automated:
+          prune: true
+          selfHeal: true
+

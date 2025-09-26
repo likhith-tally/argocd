@@ -1,0 +1,6 @@
+basename: argocd-repo-creds
+namespace: argocd
+
+creds:
+  usernameKey: gitops.read-username
+  passwordKey: gitops.read-token

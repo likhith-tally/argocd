@@ -1,0 +1,27 @@
+- name: external-secrets
+  repoUrl: https://charts.external-secrets.io
+  chartName: external-secrets
+  targetRevision: "*"
+  namespace: external-secrets
+  valuesFile: external-secrets.yaml
+
+- name: envoy
+  repoUrl: docker.io/envoyproxy
+  chartName: gateway-helm
+  targetRevision: v0.0.0-latest
+  namespace: envoy-ns
+  valuesFile: envoy.yaml
+
+- name: loki
+  repoUrl: https://grafana.github.io/helm-charts
+  chartName: loki
+  targetRevision: 6.30.1
+  namespace: loki
+  valuesFile: loki.yaml
+
+- name: mimir
+  repoUrl: https://grafana.github.io/helm-charts
+  chartName: mimir
+  targetRevision: 5.8.0-weekly.347
+  namespace: mimir
+  valuesFile: mimir.yaml

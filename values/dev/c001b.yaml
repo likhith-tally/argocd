@@ -1,0 +1,41 @@
+repoBranch: 
+  customers: child001b
+
+accountIdentity: c001b  # [NOTE] Update this manually in 3 other places for fluentbit. Need to do it once per environment, i.e., dev, staging, prod.
+
+envoy:
+  publicLoadBalancer:
+    securityGroup: ocid1.networksecuritygroup.oc1.ap-mumbai-1.aaaaaaaagppd7qzzap2unqtofmh6tvarhhp62mt6cm4llceisna3oxwkxowq
+
+traefik:
+  publicLoadBalancer:
+    count: 2
+    securityGroup: ocid1.networksecuritygroup.oc1.ap-mumbai-1.aaaaaaaagppd7qzzap2unqtofmh6tvarhhp62mt6cm4llceisna3oxwkxowq
+
+internalLoadBalancer:
+  subnet: ocid1.subnet.oc1.ap-mumbai-1.aaaaaaaa6wwnqnoxkeyry2domrhse4aln4xn4dzni3rvit6xtosvrbk7xzjq
+  securityGroup: ocid1.networksecuritygroup.oc1.ap-mumbai-1.aaaaaaaaxd3djnxkfuv4aso5najifmpk6ie5t3fgpo2pdjbrycwjc7etiwnq
+
+bizAppListeners:
+  enableUnauthPort443: true
+
+argocd:
+  username: alice
+  password: test1234
+
+snsTopics:
+  defaultTopic: "ocid1.onstopic.oc1.ap-mumbai-1.amaaaaaamg2onjqahyzctrmowsudyvp2osgfzlv7rgixmjlgrjr36l7btuka"
+  autoDeleteBackupTopic: "ocid1.onstopic.oc1.ap-mumbai-1.amaaaaaamg2onjqaq74huxzkura7viwyjf7uzyjtpjuheoj36bque32cgj4a"
+  dataSecurityTopic: "ocid1.onstopic.oc1.ap-mumbai-1.amaaaaaamg2onjqalfmw5i2u3rdfofj53fucpzfmoabjoa3chwb3g4plhfrq"
+  uuidNotFoundTopic: "ocid1.onstopic.oc1.ap-mumbai-1.amaaaaaamg2onjqatrsvotofte3vnjm3nqrtsxfln65akof4na2t735dbpta"
+
+secrets:
+  salt: "ocid1.vaultsecret.oc1.ap-mumbai-1.amaaaaaamg2onjqaunzds5evtl5c2tf4siehxnbz26x3tmsnkigkbkyhlniq"
+
+neverinstall:
+  licenseServer:
+    url: "http://neverinstall-tally-license-server.internal.tpcapoc"
+    apiKey: "uBGFOmPfYN"
+  uidGenerator:
+    url: "http://uid-generator.internal.tpcapoc"
+    apiKey: "1154d3e5-3cac-4478-b0d6-7cf34852d864"

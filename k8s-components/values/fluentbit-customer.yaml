@@ -1,0 +1,276 @@
+serviceAccount:
+  create: false
+  name: observability-agent
+
+nodeSelector:
+  kubernetes.io/arch: amd64
+
+rbac:
+  create: false
+  clusterRole: false
+
+# [TODO] Update the image from Oracle Container Registry
+# image:
+#   repository: ocir.ap-mumbai-1.oci.oraclecloud.com/bmbr2knaixlx/observability
+#   tag: fluent-bit-4.0.0-amd64
+#   pullPolicy: IfNotPresent
+
+# imagePullSecrets:
+# - name: ocirsecret
+
+daemonSetVolumes:
+- name: varlog
+  hostPath:
+    path: /var/log
+- name: varlibdockercontainers
+  hostPath:
+    path: /var/lib/docker/containers
+- name: etcmachineid
+  hostPath:
+    path: /etc/machine-id
+    type: File
+- name: systemd
+  hostPath:
+    path: /run/log/journal
+
+daemonSetVolumeMounts:
+- name: varlog
+  mountPath: /var/log
+- name: varlibdockercontainers
+  mountPath: /var/lib/docker/containers
+  readOnly: true
+- name: etcmachineid
+  mountPath: /etc/machine-id
+  readOnly: true
+- name: systemd
+  mountPath: /run/log/journal
+  readOnly: true
+
+initContainers:
+- name: kubectl
+  # [TODO] Update the image from Oracle Container Registry
+  # image: ocir.ap-mumbai-1.oci.oraclecloud.com/bmbr2knaixlx/observability:kubectl-1.33.3
+  # imagePullSecrets:
+  # - name: ocirsecret
+  image: alpine/k8s:1.33.3
+  command:
+  - /bin/sh
+  - -c
+  - |
+    set -e
+    MAX_RETRIES=7
+    DELAY=2
+
+    for i in $(seq 1 $MAX_RETRIES); do
+      NODE_LABEL=$(kubectl get node "$NODE_NAME" -o json | jq -r '.metadata.labels["Name"]')
+
+      if [ "$NODE_LABEL" != "null" ] && [ -n "$NODE_LABEL" ]; then
+        echo "[$i/$MAX_RETRIES] Got node label: $NODE_LABEL"
+        kubectl patch pod "$POD_NAME" -n "$POD_NAMESPACE" \
+          -p "{\"metadata\":{\"annotations\":{\"vm-id\":\"$NODE_LABEL\"}}}"
+        exit 0
+      fi
+
+      echo "[$i/$MAX_RETRIES] Node label not found, retrying in ${DELAY}s..."
+      sleep $DELAY
+      DELAY=$((DELAY * 2)) 
+    done
+
+    echo "Failed to get node label 'Name' after $MAX_RETRIES attempts"
+    exit 1
+  env:
+  - name: NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  - name: POD_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+  - name: POD_NAMESPACE
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.namespace
+
+config:
+  extraFiles:
+    fluent-bit.yaml: |
+      service:
+        daemon: Off
+        flush: 30
+        grace: 30
+        log_Level: info
+        parsers_File: /fluent-bit/etc/parsers.conf
+        HTTP_Server: On
+        HTTP_Listen: 0.0.0.0
+        HTTP_port: 2020
+        Health_Check: On
+
+      pipeline:
+        inputs:
+        - name: tail
+          tag: kube.*
+          path: /var/log/containers/*.log
+          parser: cri
+          db: /var/log/flb_log.db
+          rotate_wait: 5
+          db.sync: normal
+          buffer_max_size: 5M
+        
+        - name: tail
+          tag: syslog.messages
+          path: /var/log/messages
+          parser: syslog
+          db: /var/log/flb_messages.db
+          db.sync: normal
+          buffer_max_size: 5M
+
+        - name: systemd
+          tag: kubelet.systemd
+          systemd_filter: _SYSTEMD_UNIT=kubelet.service
+          path: /run/log/journal
+          db: /var/log/flb_systemd.db
+          db.sync: Full
+          strip_underscores : on
+          lowercase: on
+
+        - name: systemd
+          tag: crio.systemd
+          systemd_filter: _SYSTEMD_UNIT=crio.service
+          path: /run/log/journal
+          db: /var/log/flb_crio_systemd.db
+          db.sync: Full
+          strip_underscores : on
+          lowercase: on
+
+        filters:
+        - name: kubernetes
+          match: kube.*
+          merge_log: On
+          keep_log: Off
+          k8s-logging.exclude: On
+          buffer_size: 20M
+
+        - name: parser
+          match: kube.*
+          key_name: message
+          parser: json
+          reserve_data: On
+
+        - name: nest
+          match: kube.*
+          operation: lift
+          nested_under: kubernetes
+          add_prefix: kubernetes_
+
+        - name: modify
+          match: kube.*
+          add: tenancy dev
+          remove:
+          - kubernetes_pod_id
+          - kubernetes_labels
+          - kubernetes_annotations
+          - kubernetes_docker_id
+          - kubernetes_container_hash
+          - kubernetes_container_image
+
+        - name: modify
+          match: syslog.messages
+          add: tenancy dev
+
+        - name:  modify
+          match: kubelet.systemd
+          add: tenancy dev
+          remove:
+          - cmdline
+          - exe
+          - selinux_context
+          - cap_effective
+          - stream_id
+          - transport
+          - systemd_invocation_id
+          - systemd_cgroup
+          - boot_id
+          - machine_id
+          - gid
+          - uid
+          - systemd_slice
+          - syslog_identifier
+          - priority
+          - comm
+          - systemd_unit
+        
+        - name: modify
+          match: crio.systemd
+          add: tenancy dev
+          remove:
+          - cmdline
+          - exe
+          - selinux_context
+          - cap_effective
+          - stream_id
+          - transport
+          - systemd_invocation_id
+          - systemd_cgroup
+          - boot_id
+          - machine_id
+          - gid
+          - uid
+          - systemd_slice
+          - syslog_identifier
+          - priority
+          - comm
+          - systemd_unit
+
+        outputs:
+        - name: loki
+          match: kube.*
+          host: 10.251.0.48
+          port: 80
+          labels: service=pod_logs,pod_name=$kubernetes_pod_name,namespace=$kubernetes_namespace_name,cluster=$tenancy
+          line_format: json
+
+        - name: loki
+          match: kubelet.systemd
+          host: 10.251.0.48
+          port: 80
+          labels: service=kubelet_logs,cluster=$tenancy,vm_id=${VM_ID}
+          Log_Level: info
+          line_format: json
+
+        - name: loki
+          match: crio.systemd
+          host: 10.251.0.48
+          port: 80
+          labels: service=crio_logs,cluster=$tenancy,vm_id=${VM_ID}
+          Log_Level: info
+          line_format: json
+        
+        - name: loki
+          match: syslog.messages
+          host: 10.251.0.48
+          port: 80
+          labels: service=syslog_messages,cluster=$tenancy,vm_id=${VM_ID}
+          line_format: json
+
+args:
+- --workdir=/fluent-bit/etc
+- --config=/fluent-bit/etc/conf/fluent-bit.yaml
+
+env:
+- name: HOST_IP
+  valueFrom:
+    fieldRef:
+      fieldPath: status.hostIP
+- name: VM_ID
+  valueFrom:
+    fieldRef:
+      fieldPath: metadata.annotations['vm-id']
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 50Mi
+  limits:
+    cpu: 50m
+    memory: 80Mi

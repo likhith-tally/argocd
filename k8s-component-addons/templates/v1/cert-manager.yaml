@@ -1,0 +1,115 @@
+{{- if eq .Values.environment "" }}
+{{- if .Values.certManager.hpa.enabled }}
+---
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: cert-manager-hpa
+  namespace: {{ .Values.certManager.basename }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Values.certManager.basename }}
+  minReplicas: {{ .Values.certManager.hpa.minReplicas }}
+  maxReplicas: {{ .Values.certManager.hpa.maxReplicas }}
+  metrics:
+    - resource:
+        name: cpu
+        target:
+          averageUtilization: {{ .Values.certManager.hpa.cpuUtilization }}
+          type: Utilization
+      type: Resource
+    - resource:
+        name: memory
+        target:
+          averageUtilization: {{ .Values.certManager.hpa.memoryUtilization }}
+          type: Utilization
+      type: Resource
+
+{{- end}}
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: route53-creds
+  namespace: {{ .Values.certManager.basename }}
+type: Opaque
+data:
+  access-key-id: {{ .Values.route53.accessKeyID }}
+  secret-access-key: {{ .Values.route53.secretAccessKey }}
+
+---
+
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ .Values.certManager.certIssuerName }}
+  namespace: {{ .Values.certManager.basename }}
+spec:
+  acme:
+    email: {{ .Values.certManager.certIssuerEmail }}
+    server: {{ .Values.certManager.certIssuerServer }}
+    privateKeySecretRef:
+      name: {{ .Values.certManager.certIssuerName }}-creds
+    solvers:
+    - dns01:
+        route53:
+          accessKeyIDSecretRef:
+            name: route53-creds
+            key: access-key-id
+          secretAccessKeySecretRef:
+            name: route53-creds
+            key: secret-access-key
+          region: {{ .Values.route53.region }}
+
+---
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.tls.basename }}-cert
+  namespace: {{ .Values.sharedSecretStore.sharedNamespace }}
+spec:
+  secretName: {{ .Values.tls.basename }}-secret
+  dnsNames:
+  - "*.{{ .Values.accountIdentity }}.{{ .Values.baseDomain }}"
+  issuerRef:
+    name: {{ .Values.certManager.certIssuerName }}
+    kind: ClusterIssuer
+
+---
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: unauth-{{ .Values.tls.basename }}-cert
+  namespace: {{ .Values.sharedSecretStore.sharedNamespace }}
+spec:
+  secretName: unauth-{{ .Values.tls.basename }}-secret
+  dnsNames:
+  - "biz.{{ .Values.baseDomain }}"
+  issuerRef:
+    name: {{ .Values.certManager.certIssuerName }}
+    kind: ClusterIssuer
+
+{{- else }}
+
+---
+
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.environment }}-unauth-{{ .Values.tls.basename }}-cert
+  namespace: {{ .Values.sharedSecretStore.sharedNamespace }}
+spec:
+  secretName: {{ .Values.environment }}-unauth-{{ .Values.tls.basename }}-secret
+  dnsNames:
+  - "{{ .Values.environment }}-biz.{{ .Values.baseDomain }}"
+  issuerRef:
+    name: {{ .Values.certManager.certIssuerName }}
+    kind: ClusterIssuer
+
+{{- end }}

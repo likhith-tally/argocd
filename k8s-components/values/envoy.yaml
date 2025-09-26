@@ -1,0 +1,50 @@
+# Example values.yaml : https://github.com/envoyproxy/gateway/blob/main/charts/gateway-helm/values.tmpl.yaml
+
+# global:
+#   images:
+#     envoyGateway:
+#       image: "ocir.ap-mumbai-1.oci.oraclecloud.com/bmwva1xqkb3s/oss-images:gateway-dev-latest"
+#       pullPolicy: "IfNotPresent"
+#     ratelimit:
+#       image: "ocir.ap-mumbai-1.oci.oraclecloud.com/bmwva1xqkb3s/oss-images:ratelimit-master"
+#       pullPolicy: "IfNotPresent"
+
+deployment:
+  envoyGateway:
+    resources:
+      limits:
+        memory: 1024Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+  replicas: 1
+  pod:
+    labels:
+      component-name: gateway-controller
+    topologySpreadConstraints: 
+    - labelSelector:
+        matchLabels:
+          component-name: gateway-controller
+      maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: DoNotSchedule
+    nodeSelector: 
+      oke.oraclecloud.com/pool.name: envoy
+
+hpa:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 3
+  metrics: 
+  - resource:
+      name: cpu
+      target:
+        averageUtilization: 70
+        type: Utilization
+    type: Resource
+  - resource:
+      name: memory
+      target:
+        averageUtilization: 70
+        type: Utilization
+    type: Resource

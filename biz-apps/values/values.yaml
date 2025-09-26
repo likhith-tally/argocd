@@ -1,0 +1,264 @@
+bizAppPorts:
+- containerPort: 80
+  name: fastapi
+
+bizSvcPort: 80
+
+nodeSelector: 
+  oke.oraclecloud.com/pool.name: business_logic
+
+defaultResources:
+  requests:
+    memory: "512Mi"
+    cpu: "500m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+defaultHpaConfig:
+  minReplicas: 5
+  maxReplicas: 10
+  cpuUtilization: 70
+  memoryUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      selectPolicy: Min
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      selectPolicy: Max
+
+defaultTlsMount: false
+
+envoyController:
+  basename: envoy
+
+clusterRoles:
+  bl-sss:
+  - apiGroups: ["apps"]
+    resources: ["deployments", "deployments/scale"]
+    verbs: ["get", "list", "watch", "patch"]
+  - apiGroups: [""]
+    resources: ["nodes"]
+    verbs: ["get", "list", "watch", "patch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "delete", "patch"]
+  - apiGroups: ["policy"]
+    resources: ["pods/eviction"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["persistentvolumes"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "watch", "list"]
+  - apiGroups: ["storage.k8s.io"]
+    resources: ["csinodes"]
+    verbs: ["get", "watch", "list"]
+
+internalLoadBalancer:
+  type: nlb
+
+envoy:
+  common:
+    env:
+      RUN_AS: ENVOY
+
+  bl-db-a-r:
+    app:
+      routes:
+        ssp:
+        - type: Exact
+          value: /auth/pvt/checkuser  # Intentionally left: Unknown to FastAPI
+
+  bl-db-a-cru:
+    app:
+      routes:
+        ssp:
+        - type: Exact
+          value: /unauth/init
+
+  bl-db-o-r:
+    app:
+      serviceType: LoadBalancer
+      routes:
+        ssp:
+        - type: Exact
+          value: /auth/listbackupadmin
+        - type: Exact
+          value: /auth/manageusers
+        - type: Exact
+          value: /auth/listplans
+        - type: Exact
+          value: /auth/userstatus
+        - type: Exact
+          value: /auth/sss/status
+        - type: Exact
+          value: /auth/listimageupdates
+        - type: Exact
+          value: /auth/get-eventlog
+        - type: Exact
+          value: /auth/listemails
+        cis:
+        - type: Exact
+          value: /cis/status
+  
+  bl-db-o-cru:
+    app:
+      tlsMount: true
+      timeouts: 
+        ssp: "120s"
+      routes:
+        ssp:
+        - type: Exact
+          value: /auth/updateimage
+        - type: Exact
+          value: /auth/sss/start/office
+        - type: Exact
+          value: /auth/sss/stop/office
+        - type: Exact
+          value: /auth/sss/restart/computer
+        - type: Exact
+          value: /auth/sss/restart/office
+        - type: Exact
+          value: /auth/connect
+        cis:
+        - type: Exact
+          value: /cis/resolve
+        - type: Exact
+          value: /cis/provision
+        - type: Exact
+          value: /cis/renewal
+        - type: Exact
+          value: /cis/alter
+
+  bl-db-o-crud:
+    app:
+      routes:
+        ssp:
+        - type: Exact
+          value: /auth/manualbackup
+        - type: PathPrefix
+          value: /auth/sss/schedule
+
+  bl-db-ao-cru:
+    app:
+      tlsMount: true
+      routes:
+        ssp:
+        - type: Exact
+          value: /auth/sessions
+
+  bl-db-ao-crud:
+    app:
+      timeouts: 
+        ssp: "120s"
+      routes:
+        ssp:
+        - type: Exact
+          value: /auth/edituser
+        - type: Exact
+          value: /auth/deleteuser
+
+  bl-vault-ao-r:
+    app:
+      timeouts: 
+        ssp: "120s"
+      routes:
+        ssp:
+        - type: Exact
+          value: /unauth/encryptedlogin
+        - type: Exact
+          value: /unauth/resetpin
+        - type: Exact
+          value: /auth/adduser
+        - type: Exact
+          value: /auth/change-pin
+        - type: Exact
+          value: /auth/confirm-change-pin
+        - type: Exact
+          value: /auth/listbackupdetailsadmin
+        - type: Exact
+          value: /auth/listbackupsnonadmin
+  
+  bl-infra-ao-crud:
+    app:
+      routes:
+        ssp:
+        - type: Exact
+          value: /auth/deletebackup
+        - type: Exact
+          value: /auth/downloadbackups
+        - type: Exact
+          value: /auth/harddeprovision
+        cis:
+        - type: PathPrefix
+          value: /cis/deprov
+
+nats:
+  common:
+    env:
+      RUN_AS: NATS
+
+  bl-vault-ao-r:
+    app:
+      env:
+        NATS_STREAM_NAME: user-mgmt
+        NATS_SUBJECT_NAME: user-mgmt.>
+        NATS_QUEUE_GROUP_NAME: user-mgmt
+        NATS_MAX_ACK_PENDING: "1000"
+  
+  bl-sss:
+    app:
+      env:
+        NATS_STREAM_NAME: vm-mgmt
+        NATS_SUBJECT_NAME: vm-mgmt.>
+        NATS_QUEUE_GROUP_NAME: vm-mgmt-queue-group
+        NATS_MAX_ACK_PENDING: "1000"
+      hpaConfig:
+        minReplicas: 10
+        maxReplicas: 15
+
+  bl-infra-ao-crud:
+    app:
+      env:
+        NATS_STREAM_NAME: cis
+        NATS_SUBJECT_NAME: cis.>
+        NATS_QUEUE_GROUP_NAME: cis
+        NATS_MAX_ACK_PENDING: "1000"
+
+  bl-git-crud:
+    app:
+      env:
+        NATS_STREAM_NAME: git
+        NATS_SUBJECT_NAME: git.>
+        NATS_QUEUE_GROUP_NAME: git
+        NATS_MAX_ACK_PENDING: "1"
+  
+cron:
+  bl-infra-ao-crud:
+    auto-delete-backup:
+      schedule: "0 */6 * * *"
+      env:
+        RUN_AS: AUTO_DELETE_CRON
+
+  bl-sss:
+    schedule-shutdown:
+      schedule: "*/30 * * * *"
+      env:
+        RUN_AS: SCHEDULE_SHUTDOWN

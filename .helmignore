@@ -1,0 +1,7 @@
+argocd-repo-creds/
+biz-apps/
+customers/
+k8s-component-addons/
+k8s-components/
+vdi-auth-app/
+.git/

@@ -1,0 +1,89 @@
+apiVersion: external-secrets.io/v1
+kind: SecretStore
+metadata:
+  name: "{{ .Values.basename }}-ss"
+  namespace: {{ .Values.namespace }}
+spec:
+  provider:
+    oracle:
+      region: {{ .Values.region }}
+      vault: {{ .Values.repoCredsVault }}
+      principalType: Workload
+      serviceAccountRef:
+        name: "{{ .Values.basename }}-sa"
+
+---
+
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: "{{ .Values.basename }}-templates-es"
+  namespace: {{ .Values.namespace }}
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: "{{ .Values.basename }}-ss"
+    kind: SecretStore
+  target:
+    name: "{{ .Values.basename }}-templates-secret"
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    template:
+      mergePolicy: Merge
+      metadata:
+        labels:
+          argocd.argoproj.io/secret-type: repository
+      data:
+        url: {{ .Values.repoUrl.templates }}
+        type: git
+        project: default
+  data:
+  - secretKey: username
+    remoteRef:
+      key: {{ .Values.creds.usernameKey }}
+  - secretKey: password
+    remoteRef:
+      key: {{ .Values.creds.passwordKey }}
+
+---
+
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: "{{ .Values.basename }}-customers-es"
+  namespace: {{ .Values.namespace }}
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    name: "{{ .Values.basename }}-ss"
+    kind: SecretStore
+  target:
+    name: "{{ .Values.basename }}-customers-secret"
+    creationPolicy: Owner
+    deletionPolicy: Retain
+    template:
+      mergePolicy: Merge
+      metadata:
+        labels:
+          argocd.argoproj.io/secret-type: repository
+      data:
+        url: {{ .Values.repoUrl.customers }}
+        type: git
+        project: default
+  data:
+  - secretKey: username
+    remoteRef:
+      key: {{ .Values.creds.usernameKey }}
+  - secretKey: password
+    remoteRef:
+      key: {{ .Values.creds.passwordKey }}
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+    name: "{{ .Values.basename }}-sa"
+    namespace: {{ .Values.namespace }}
+    annotations:
+      oci.oraclecloud.com/tenant-id: {{ index .Values "compartments" .Values.accountIdentity "root" }}

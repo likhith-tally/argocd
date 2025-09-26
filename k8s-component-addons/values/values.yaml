@@ -1,0 +1,74 @@
+certManager:
+  basename: cert-manager
+
+  certIssuerName: letsencrypt
+  certIssuerEmail: devteam.tpca@tallysolutions.com
+  certIssuerServer: https://acme-v02.api.letsencrypt.org/directory
+
+  hpa:
+    enabled: true
+    minReplicas: 5
+    maxReplicas: 10
+    cpuUtilization: 70
+    memoryUtilization: 80
+  
+envoy:
+  basename: envoy
+
+  publicLoadBalancer:
+    type: nlb
+
+  replicas: 3
+
+  nodeSelector: oke.oraclecloud.com/pool.name=envoy
+  podLabels: 
+    app.kubernetes.io/name: envoy
+
+  hpa:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 5
+    cpuUtilization: 70
+    memoryUtilization: 80
+
+traefik:
+  basename: traefik
+
+  publicLoadBalancer:
+    type: nlb
+
+  nodeSelector: oke.oraclecloud.com/pool.name=traefik
+  podLabels: 
+    app.kubernetes.io/instance: traefik-traefik
+    app.kubernetes.io/name: traefik
+  
+nats:
+  streamNamespace: nack
+
+  streams:
+  - name: cis
+    subjects: ["cis.>"]
+  - name: vm-mgmt
+    subjects: ["vm-mgmt.>"]
+  - name: user-mgmt
+    subjects: ["user-mgmt.>"]
+  - name: user-mgmt-cust
+    subjects: ["user-mgmt-cust.>"]
+  - name: data-mgmt
+    subjects: ["data-mgmt.>"]
+  - name: git
+    subjects: ["git.>"]
+  - name: schedules
+    subjects: ["schedules.>"]
+  - name: rc
+    subjects: ["rc.>"]
+
+externalSecrets:
+  basename: external-secrets
+
+  hpa:
+    enabled: true
+    minReplicas: 5
+    maxReplicas: 10
+    cpuUtilization: 70
+    memoryUtilization: 80
