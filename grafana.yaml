@@ -1,0 +1,130 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  {{- if eq .Values.environment ""}}
+  name: {{ .Values.grafana.basename }}-pvc
+  {{- else}}
+  name: {{ .Values.environment }} - {{ .Values.grafana.basename }}-pvc
+  {{- end}}
+  namespace: grafana
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    {{- if eq .Values.environment ""}}
+    app: {{ .Values.grafana.basename }}
+    {{- else}}
+    app: {{ .Values.environment }} - {{ .Values.grafana.basename }}
+    {{- end}}
+  {{- if eq .Values.environment ""}}
+  name: {{ .Values.grafana.basename }}
+  {{- else}}
+  name: {{ .Values.environment }} - {{ .Values.grafana.basename }}
+  {{- end}}
+  namespace: grafana
+spec:
+  replicas: {{ .Values.grafana.replicas }}
+  selector:
+    matchLabels:
+      {{- if eq .Values.environment ""}}
+      app: {{ .Values.grafana.basename }}
+      {{- else}}
+      app: {{ .Values.environment }} - {{ .Values.grafana.basename }}
+      {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- if eq .Values.environment ""}}
+        app: {{ .Values.grafana.basename }}
+        {{- else}}
+        app: {{ .Values.environment }} - {{ .Values.grafana.basename }}
+        {{- end }}
+    spec:
+      nodeSelector:
+        oke.oraclecloud.com/pool.name: {{ .Values.grafana.nodeSelector }}
+      securityContext:
+        fsGroup: 472
+        supplementalGroups:
+        - 0
+      containers:
+      - name: grafana
+        image: grafana/grafana:12.0.2
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3000
+          name: http-grafana
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /robots.txt
+            port: 3000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          successThreshold: 1
+          timeoutSeconds: 2
+        livenessProbe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          successThreshold: 1
+          tcpSocket:
+            port: 3000
+          timeoutSeconds: 1
+        resources:
+          requests:
+            cpu: 2
+            memory: 4Gi
+          limits:
+            cpu: 4
+            memory: 8Gi
+        volumeMounts:
+        - mountPath: /var/lib/grafana
+          {{- if eq .Values.environment ""}}
+          name: {{ .Values.grafana.basename }}-pv
+          {{- else}}
+          name: {{ .Values.environment }} - {{ .Values.grafana.basename }}-pv
+          {{- end}}
+      volumes:
+      - {{- if eq .Values.environment ""}}
+        name: {{ .Values.grafana.basename }}-pv
+        {{- else}}
+        name: {{ .Values.environment }} - {{ .Values.grafana.basename }}-pv
+        {{- end}}
+        persistentVolumeClaim:
+          {{- if eq .Values.environment ""}}
+          claimName: {{ .Values.grafana.basename }}-pvc
+          {{- else}}
+          claimName: {{ .Values.environment }} - {{ .Values.grafana.basename }}-pvc
+          {{- end}}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  {{- if eq .Values.environment ""}}
+  name: {{ .Values.grafana.basename }}-svc
+  {{- else}}
+  name: {{ .Values.environment }} - {{ .Values.grafana.basename }}-svc
+  {{- end}}
+  namespace: grafana
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 3000
+  selector:
+    {{- if eq .Values.environment ""}}
+    app: {{ .Values.grafana.basename }}
+    {{- else}}
+    app: {{ .Values.environment }} - {{ .Values.grafana.basename }}
+    {{- end }}
+  sessionAffinity: None
+  type: ClusterIP

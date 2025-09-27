@@ -1,0 +1,92 @@
+{{- if eq .Values.environment "" }}
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: {{ .Values.envoy.basename }}-gateway-class
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+{{- end }}
+---
+
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  {{ - if eq .Values.environment ""}}
+  name: {{ .Values.envoy.basename}}-proxy
+  {{- else}}
+  name: {{ .Values.environment }} - {{ .Values.envoy.basename}}-proxy
+  {{- end }}
+  namespace: envoy-ns
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        annotations:
+          oci.oraclecloud.com/load-balancer-type: {{ .Values.envoy.publicLoadBalancer.type }}
+          oci-network-load-balancer.oraclecloud.com/oci-network-security-groups: {{ .Values.publicLoadBalancer.securityGroup}}
+          oci-network-load-balancer.oraclecloud.com/node-label-selector: {{ .Values.envoy.nodeSelector }}
+      envoyDeployment:
+        replicas: 1
+        pod:
+          nodeSelector:
+            envoy: "true"
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: envoy-gateway
+  namespace: envoy-ns
+spec:
+  gatewayClassName: envoy-gateway-class
+  infrastructure:
+    parametersRef:
+      group: gateway.envoyproxy.io
+      kind: EnvoyProxy
+      name: envoy-proxy
+  listeners:
+  - name: http
+    protocol: HTTP
+    port: 80
+    allowedRoutes:
+      namespaces:
+        from: All
+      kinds:
+      - group: gateway.networking.k8s.io
+        kind: HTTPRoute
+  - name: https
+    protocol: HTTPS
+    port: 443
+    hostname: "PLACEHOLDER"
+    allowedRoutes:
+      namespaces:
+        from: Selector
+        selector:
+          matchLabels:
+            kubernetes.io/metadata.name: grafana
+      kinds:
+      - group: gateway.networking.k8s.io
+        kind: HTTPRoute
+    tls:
+      mode: Terminate
+      certificateRefs:
+      - name: grafana-tls
+---
+
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: grafana-route
+  namespace: grafana
+spec:
+  parentRefs:
+  - name: envoy-gateway
+    namespace: envoy-ns
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: grafana
+      port: 80

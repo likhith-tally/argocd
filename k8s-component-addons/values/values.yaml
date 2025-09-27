@@ -15,7 +15,6 @@ envoy:
 
   publicLoadBalancer:
     type: nlb
-
   replicas: 2
 
   nodeSelector: oke.oraclecloud.com/pool.name=grafana
@@ -38,3 +37,9 @@ externalSecrets:
     maxReplicas: 10
     cpuUtilization: 70
     memoryUtilization: 80
+
+grafana:
+  basename: grafana
+  replicas: 1
+  nodeSelector: oke.oraclecloud.com/pool.name=grafana
+

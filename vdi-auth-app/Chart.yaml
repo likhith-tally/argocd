@@ -1,5 +1,0 @@
-apiVersion: v2
-name: vdi-auth-chart
-description: A Helm chart for VDI authentication deployment
-version: 0.1.0
-appVersion: 1.0.0

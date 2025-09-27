@@ -1,7 +1,7 @@
 {{- if eq .Values.environment "" }}
 {{- if .Values.certManager.hpa.enabled }}
----
 
+---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
