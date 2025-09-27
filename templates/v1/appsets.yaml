@@ -20,7 +20,7 @@ spec:
       repoURL: {{ .Values.repoUrl.templates }}
       revision: {{ .Values.repoBranch.templates }}
       files:
-      - path: lgm/all-charts.yaml
+      - path: external-charts/all-charts.yaml
   template:
     metadata:
       {{- if eq .Values.environment "" }}
@@ -37,7 +37,7 @@ spec:
         targetRevision: "{{"{{"}} .targetRevision {{"}}"}}"
         helm:
           valueFiles:
-          - "$values/lgm/values/{{"{{"}} .valuesFile {{"}}"}}"
+          - "$values/external-charts/values/{{"{{"}} .valuesFile {{"}}"}}"
       - repoURL: {{ .Values.repoUrl.templates }}
         targetRevision: {{ .Values.repoBranch.templates }}
         ref: values
@@ -79,7 +79,7 @@ spec:
       valueFiles:
       - values/values.yaml
       - ../values/values.yaml
-      - ../values/{{ .Values.stage }}/lgm.yaml
+      - ../values/{{ .Values.stage }}/obs.yaml
       - ../values/{{ .Values.stage }}/common.yaml
       parameters:
       - name: "environment"
