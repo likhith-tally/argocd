@@ -7,7 +7,6 @@ repoUrl:
 repoBranch:
   templates: main
 
-
 publicLoadBalancer:
   subnet: ocid1.subnet.oc1.ap-mumbai-1.aaaaaaaagxj6qdhlafsjomsjsrvxalrdfnewfstqo76m3hhw7mr3yjko7dhq
   securityGroup: ocid1.networksecuritygroup.oc1.ap-mumbai-1.aaaaaaaaxjxbu3qs5m3ryadgqy4yr5mj65lieh57jabxhn435xbijs22fzaa
@@ -16,6 +15,11 @@ internalLoadBalancer:
   subnet: ocid1.subnet.oc1.ap-mumbai-1.aaaaaaaa3l4x5jbznzwq6buvry2snstdgcx2v7irkqhx55m5jqavsxo46mcq
   securityGroup: ocid1.networksecuritygroup.oc1.ap-mumbai-1.aaaaaaaa26fmmtxaepq54vebsrnf2necqckwfh6vv7f7sgnbqxoim2v3q5fq
 
+loki:
+  endpoint: loki-dev-bmgvpajvgkne.private.compat.objectstorage.ap-mumbai-1.oci.customer-oci.com
+  privateLoadbalancer:
+    type: nlb
+  
 #future
 snsTopics:
   defaultTopic: "ocid1.onstopic.oc1.ap-mumbai-1.amaaaaaamg2onjqahyzctrmowsudyvp2osgfzlv7rgixmjlgrjr36l7btuka"

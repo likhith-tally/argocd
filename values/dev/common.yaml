@@ -1,13 +1,3 @@
-stage: dev  # [NOTE] Update this manually in 4 other places for fluentbit. Need to do it once per environment, i.e., dev, staging, prod.
-environment: ""
-
-repoUrl: 
-  templates: https://github.com/likhith-tally/argocd.git
-  customers: https://github.com/likhith-tally/argocd.git
-
-repoBranch: 
-  templates: main
-
 repoCredsVault: "ocid1.vault.oc1.ap-mumbai-1.fbuhufypaafpc.abrg6ljrrwfpf7346uuoav6zczip6dscqbi52hghuvuup3wifc7uqk4nwxba"
 
 baseDomain: in.tpoci.tgodev.com
@@ -55,6 +45,6 @@ images:
   vdiAuth: tally-vdi-auth:tally_vdi_auth_v2.6
 
 observability:
-  lokiEndpoint: "http://10.251.0.48:80" 
+  lokiEndpoint: "10.251.0.38" 
   mimirEndpoint: "http://10.251.0.44:80"
 

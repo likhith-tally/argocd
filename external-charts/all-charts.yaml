@@ -12,11 +12,11 @@
   namespace: envoy-ns
   valuesFile: envoy.yaml
 
-- name: loki
+- name: loki-test
   repoUrl: https://grafana.github.io/helm-charts
-  chartName: loki
+  chartName: loki-test
   targetRevision: 6.30.1
-  namespace: loki
+  namespace: loki-test
   valuesFile: loki.yaml
 
 - name: mimir

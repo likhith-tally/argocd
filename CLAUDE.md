@@ -14,10 +14,10 @@ This is a Helm chart repository for managing ArgoCD ApplicationSets and Applicat
 helm lint .
 
 # Template and validate chart output
-helm template . --values values/dev/lgm.yaml --values values/dev/common.yaml
+helm template . --values values/dev/obs.yaml --values values/dev/common.yaml
 
 # Dry run deployment
-helm install --dry-run --debug argocd-chart . --values values/dev/lgm.yaml
+helm install --dry-run --debug argocd-chart . --values values/dev/obs.yaml
 
 # Package chart
 helm package .
@@ -39,12 +39,8 @@ find . -name "*.yaml" -o -name "*.yml" | xargs -I {} yamllint {}
 - **templates/v1/**: Contains ArgoCD ApplicationSet and Application definitions
 - **values/**: Environment-specific configuration files organized by stage (dev, staging, prod)
 - **k8s-component-addons/**: Infrastructure components (cert-manager, envoy, grafana, external-secrets)
-- **k8s-components/**: Platform components with chart definitions
-- **lgm/**: LGM-specific application charts
-- **biz-apps/**: Business application deployments
-- **customers/**: Customer-specific configurations
+- **external-charts/**: Third-party Helm charts and platform components
 - **argocd-repo-creds/**: ArgoCD repository credentials setup
-- **vdi-auth-app/**: VDI authentication application
 
 ### Component Types
 
@@ -54,12 +50,10 @@ find . -name "*.yaml" -o -name "*.yml" | xargs -I {} yamllint {}
    - grafana: Monitoring and observability
    - external-secrets: Secret management
 
-2. **Platform Components** (`k8s-components/` and `lgm/`):
-   - traefik: Reverse proxy and load balancer
-   - external-secrets: Kubernetes secret management
-   - nats/nack: Messaging infrastructure
-   - fluent-bit: Log collection and forwarding
-   - loki/mimir: Observability stack
+2. **External Charts** (`external-charts/`):
+   - Third-party Helm charts for platform components
+   - Chart definitions stored in `external-charts/all-charts.yaml`
+   - Component-specific values in `external-charts/values/`
 
 ### Environment Management
 
@@ -69,14 +63,15 @@ The repository supports multi-environment deployments:
 - **prod/**: Production environment configurations
 
 Each environment has:
-- `lgm.yaml`: LGM-specific settings including repo URLs, load balancer configs, SNS topics
+- `obs.yaml`: Observability and platform-specific settings
 - `common.yaml`: Shared configuration across environments
-- `parent.yaml`: Parent environment references
+- `parent.yaml`: Parent environment references (staging/prod only)
+- `c001b.yaml`: Customer-specific configurations (staging/prod only)
 
 ### ArgoCD Integration
 
 The main ApplicationSet template (`templates/v1/appsets.yaml`) creates:
-1. **LGM Components ApplicationSet**: Deploys charts defined in `lgm/all-charts.yaml`
+1. **External Charts ApplicationSet**: Deploys charts defined in `external-charts/all-charts.yaml`
 2. **K8s Component Addons Application**: Deploys infrastructure components
 
 Key features:
@@ -91,8 +86,11 @@ Key features:
 ```
 values/values.yaml (global defaults)
 ├── values/{stage}/common.yaml (stage-specific common config)
-├── values/{stage}/lgm.yaml (LGM-specific config)
-└── k8s-component-addons/values/values.yaml (component defaults)
+├── values/{stage}/obs.yaml (observability and platform config)
+├── values/{stage}/c001b.yaml (customer-specific config, staging/prod only)
+├── values/{stage}/parent.yaml (parent environment refs, staging/prod only)
+├── k8s-component-addons/values/values.yaml (infrastructure component defaults)
+└── external-charts/values/ (third-party chart values)
 ```
 
 ### Chart Definition Format
@@ -114,13 +112,14 @@ Charts are defined in YAML files with this structure:
 
 ## Development Workflow
 
-1. **Add New Component**:
-   - Add chart definition to appropriate `all-charts.yaml`
-   - Create values file in `values/{environment}/`
-   - Update component configuration in `k8s-component-addons/values/values.yaml` if needed
+1. **Add New External Chart**:
+   - Add chart definition to `external-charts/all-charts.yaml`
+   - Create values file in `external-charts/values/` if needed
+   - Update environment configuration in `values/{stage}/obs.yaml` or `values/{stage}/common.yaml`
 
 2. **Modify Environment**:
-   - Update values in `values/{stage}/lgm.yaml` or `values/{stage}/common.yaml`
+   - Update values in `values/{stage}/obs.yaml` or `values/{stage}/common.yaml`
+   - For customer-specific configs, modify `values/{stage}/c001b.yaml`
    - Test with `helm template` before committing
 
 3. **Infrastructure Changes**:

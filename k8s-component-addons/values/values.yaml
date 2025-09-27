@@ -12,7 +12,6 @@ certManager:
 
 envoy:
   basename: envoy
-
   publicLoadBalancer:
     type: nlb
   replicas: 2
