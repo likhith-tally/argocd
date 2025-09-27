@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs yamllint:*)",
+      "Bash(python:*)",
+      "Bash(helm template:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -226,8 +226,8 @@ gateway:
   service:
     type: LoadBalancer
     annotations:
-      oci.oraclecloud.com/load-balancer-type: {{ .Values.loki.privateLoadbalancer.nlb }}
+      oci.oraclecloud.com/load-balancer-type: "{{ .Values.loki.privateLoadbalancer.type }}"
       oci-network-load-balancer.oraclecloud.com/internal: "true"
-      oci-network-load-balancer.oraclecloud.com/subnet: {{ .Values.internalLoadBalancer.subnet }}
-      oci-network-load-balancer.oraclecloud.com/oci-network-security-groups: {{ .Values.internalLoadBalancer.securityGroup }}
-      oci-network-load-balancer.oraclecloud.com/assigned-private-ipv4: { {.Values.observability.lokiEndpoint } }
+      oci-network-load-balancer.oraclecloud.com/subnet: "{{ .Values.loki.service.annotations.subnet }}"
+      oci-network-load-balancer.oraclecloud.com/oci-network-security-groups: "{{ .Values.loki.service.annotations.securityGroup }}"
+      oci-network-load-balancer.oraclecloud.com/assigned-private-ipv4: "{{ .Values.loki.privateLoadbalancer.ip }}"
