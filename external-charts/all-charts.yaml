@@ -17,7 +17,7 @@
   chartName: loki
   targetRevision: 6.30.1
   namespace: loki-test
-  valuesFile: loki.yaml
+  valuesFile: loki-values.yaml
 
 - name: mimir
   repoUrl: https://grafana.github.io/helm-charts
