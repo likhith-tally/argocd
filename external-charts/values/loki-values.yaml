@@ -1,3 +1,8 @@
+global:
+  extraEnvFrom:
+    - secretRef:
+        name: loki-s3-secret
+
 loki:
   image:
     tag: "3.4.3"
@@ -20,10 +25,10 @@ loki:
       ruler: test-loki-r
       admin: test-loki-a
     s3:
-      endpoint: loki-prod-bm03zkrqs1tm.private.compat.objectstorage.ap-mumbai-1.oci.customer-oci.com
-      region: ap-mumbai-1
-      accessKeyId: 3a61903405ad24d391a7223c358fbcf2da664d36
-      secretAccessKey: zLJf7F5mPFj3rOjYCzdH6LI/cBiOrMAbvrYGxmN9Qkg=
+      endpoint: {{ .Values.loki.endpoint }}
+      region: {{ .Values.region }}
+      accessKeyId: ${OCI_ACCESS_KEY_ID}
+      secretAccessKey: ${OCI_SECRET_ACCESS_KEY}
       signature_version: s3v4
       s3ForcePathStyle: true
       insecure: false
